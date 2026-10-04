@@ -9,7 +9,41 @@
 [![Sockets](https://img.shields.io/badge/Networking-POSIX%20Sockets-4A90E2?style=for-the-badge)](https://man7.org/linux/man-pages/man7/socket.7.html)
 [![Parser](https://img.shields.io/badge/JSON-nlohmann%2Fjson-3572A5?style=for-the-badge)](https://github.com/nlohmann/json)
 [![Build](https://img.shields.io/badge/Build-GNU%20Make-5C8374?style=for-the-badge&logo=gnu&logoColor=white)](#-compilation--build)
-[![License](https://img.shields.io/badge/License-Educational%20%2F%20MIT-9B59B6?style=for-the-badge)](#-license)
+
+<br>
+
+<table>
+<tr>
+<td align="center" width="25%">
+
+### 🐧 Linux Native
+**Kernel-level telemetry**
+
+</td>
+<td align="center" width="25%">
+
+### 🌐 TCP Powered
+**Real-time transport**
+
+</td>
+<td align="center" width="25%">
+
+### 🚨 Smart Alerts
+**Health classification**
+
+</td>
+<td align="center" width="25%">
+
+### 📊 Live TUI
+**Terminal observability**
+
+</td>
+</tr>
+</table>
+
+> [!IMPORTANT]
+> **LCSM is built from the ground up to demonstrate Linux systems programming, socket programming, concurrency, telemetry collection, protocol design, and fault-tolerant monitoring.**
+
 
 <br />
 
@@ -80,7 +114,20 @@ The **Linux System Monitor** is a distributed, client-server monitoring solution
 
 ---
 
+
+### 🎯 System at a Glance
+
+<table>
+<tr>
+<td align="center"><strong>📡 Telemetry</strong><br>CPU • RAM • Disk • Processes</td>
+<td align="center"><strong>🔌 Transport</strong><br>TCP / NDJSON</td>
+<td align="center"><strong>🧠 Processing</strong><br>Validation • Registry • Alerts</td>
+<td align="center"><strong>💾 Storage</strong><br>CSV • Server Logs</td>
+</tr>
+</table>
+
 ## 🖥️ Live Dashboard Preview
+
 
 The central server renders a real-time terminal UI summarizing active fleet topology, resource consumption, and health statuses:
 
@@ -100,6 +147,17 @@ Dashboard refresh interval: 2 seconds
 
 ---
 
+### 🟢 Health Status Legend
+
+| Status | Meaning |
+|:---:|---|
+| 🟢 **NORMAL** | System operating within configured limits |
+| 🟡 **WARNING** | Resource usage crossed warning threshold |
+| 🔴 **CRITICAL** | Resource usage crossed critical threshold |
+| ⚫ **OFFLINE** | Client heartbeat timed out |
+
+> **Operator view:** The dashboard is intentionally terminal-first, keeping the monitoring workflow lightweight and Linux-native.
+
 ## ⚡ Key Features
 
 | Domain | Capability | Description |
@@ -114,7 +172,32 @@ Dashboard refresh interval: 2 seconds
 
 ---
 
+
+### 🧩 Capability Map
+
+```text
+                    ┌──────────────────────────────┐
+                    │       LCSM CAPABILITIES      │
+                    └──────────────┬───────────────┘
+                                   │
+        ┌──────────────────────────┼──────────────────────────┐
+        │                          │                          │
+        ▼                          ▼                          ▼
+   🐧 SYSTEMS                 🌐 NETWORKING              📊 OBSERVABILITY
+   /proc + statvfs            TCP + NDJSON               Dashboard + CSV
+        │                          │                          │
+        └──────────────────────────┼──────────────────────────┘
+                                   │
+                                   ▼
+                         🚨 ALERT + HEALTH ENGINE
+                                   │
+                    ┌──────────────┼──────────────┐
+                    ▼              ▼              ▼
+                 NORMAL         WARNING        CRITICAL
+```
+
 ## 🏛️ System Architecture
+
 
 ### High-Level Data Flow
 
@@ -202,7 +285,56 @@ graph TD
 
 ---
 
+
+### 🔄 Telemetry Journey
+
+```text
+┌──────────────┐
+│ Linux Kernel │
+└──────┬───────┘
+       │
+       ▼
+┌────────────────┐
+│ SystemMonitor  │
+└──────┬─────────┘
+       │
+       ▼
+┌────────────────┐
+│   SystemData   │
+└──────┬─────────┘
+       │
+       ▼
+┌────────────────┐
+│ JSON / NDJSON  │
+└──────┬─────────┘
+       │
+       ▼
+╔════════════════╗
+║   TCP SOCKET   ║
+╚═══════╤════════╝
+        │
+        ▼
+┌────────────────┐
+│ Server Parser  │
+└──────┬─────────┘
+       │
+       ▼
+┌────────────────┐
+│ ClientRegistry │
+└───┬────────┬───┘
+    │        │
+    ▼        ▼
+ Alerts    Logging
+    │        │
+    └───┬────┘
+        ▼
+┌────────────────┐
+│ Live Dashboard │
+└────────────────┘
+```
+
 ## 📡 Wire Protocol Specification
+
 
 The system uses an application-level **Newline-Delimited JSON (NDJSON)** protocol over persistent **TCP/IPv4** connections. Every transmission is terminated by a strict newline character (`\n` or `0x0A`).
 
@@ -344,7 +476,31 @@ make
 
 ---
 
+
+### ⚡ Build Flow
+
+```text
+                    make
+                     │
+          ┌──────────┴──────────┐
+          ▼                     ▼
+    ┌───────────┐         ┌───────────┐
+    │  CLIENT   │         │  SERVER   │
+    └─────┬─────┘         └─────┬─────┘
+          │                     │
+          ▼                     ▼
+   build/client            build/server
+          │                     │
+          └──────────┬──────────┘
+                     ▼
+                make test
+                     │
+                     ▼
+              🧪 TEST SUITE
+```
+
 ## 🚀 Quick Start
+
 
 Get your monitoring cluster running locally in under 30 seconds across two terminal windows.
 
@@ -533,7 +689,26 @@ make test
 
 ---
 
+
+### 🏆 Verification Snapshot
+
+<div align="center">
+
+| 🧪 Metrics | 📡 Protocol | 🛡️ Validation | 🔄 Recovery |
+|:---:|:---:|:---:|:---:|
+| ✅ Tested | ✅ Tested | ✅ Tested | ✅ Tested |
+
+| 🚨 Alerting | 💾 Persistence | 🧵 Concurrency | 🛑 Graceful Shutdown |
+|:---:|:---:|:---:|:---:|
+| ✅ Tested | ✅ Tested | ✅ Tested | ✅ Tested |
+
+</div>
+
+> [!NOTE]
+> The verification matrix below remains the detailed source of truth for the project's testing scenarios and outcomes.
+
 ## 🔍 Architectural Considerations & Limitations
+
 
 1. **Persistent Client Identity Across Local Processes:**  
    The current hardware signature algorithm ties client identity to machine-level identifiers. Consequently, launching multiple client processes on the *exact same physical machine* shares the same identity token (`PC-XXXXXX`), appearing as a single logical entity in the server registry.
@@ -546,7 +721,30 @@ make test
 
 ---
 
+
+### 🛣️ Evolution Path
+
+```text
+CURRENT
+  │
+  ├── 🐧 Linux telemetry
+  ├── 🌐 TCP / NDJSON
+  ├── 🚨 Threshold alerts
+  ├── 📊 Terminal dashboard
+  └── 💾 CSV persistence
+        │
+        ▼
+NEXT
+  │
+  ├── 🔐 TLS / mTLS
+  ├── 🗄️ Database persistence
+  ├── 🌐 Web dashboard
+  ├── 🐳 Containerization
+  └── ⚙️ systemd services
+```
+
 ## 🗺️ Future Roadmap
+
 
 - [ ] **Transport Security:** Integrate OpenSSL / TLS 1.3 encryption with client-side mutual TLS (mTLS) authentication.
 - [ ] **Dynamic Configuration:** Wire `ConfigLoader` into live server state to allow dynamic threshold updates without recompilation.
@@ -559,6 +757,40 @@ make test
 ---
 
 <div align="center">
+
+<br>
+
+<table align="center">
+<tr>
+<td align="center">
+
+### 🐧 Linux
+
+</td>
+<td align="center">
+
+### ⚡ C++17
+
+</td>
+<td align="center">
+
+### 🌐 TCP
+
+</td>
+<td align="center">
+
+### 📡 NDJSON
+
+</td>
+<td align="center">
+
+### 📊 Observability
+
+</td>
+</tr>
+</table>
+
+<br>
 
 **Star ⭐ this repository if you find it helpful for your Linux systems programming journey!**
 
