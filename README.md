@@ -592,22 +592,6 @@ make test
 
 </div>
 
-> [!NOTE]
-> The verification matrix below remains the detailed source of truth for the project's testing scenarios and outcomes.
-
-## 🗺️ Future Roadmap
-
-
-- [ ] **Transport Security:** Integrate OpenSSL / TLS 1.3 encryption with client-side mutual TLS (mTLS) authentication.
-- [ ] **Dynamic Configuration:** Wire `ConfigLoader` into live server state to allow dynamic threshold updates without recompilation.
-- [ ] **Database Persistence:** Introduce an embedded SQLite / DuckDB storage engine with automated retention and downsampling.
-- [ ] **Web Dashboard:** Build a lightweight, responsive WebSocket-driven web UI with interactive Chart.js / Grafana visualizations.
-- [ ] **Containerization:** Provide official multi-stage `Dockerfile` and `docker-compose.yml` configurations for instant deployment.
-- [ ] **Extended Metrics:** Collect network interface throughput (`/proc/net/dev`), per-core CPU temperature sensors, and top CPU-consuming processes.
-- [ ] **Daemon Management:** Provide pre-configured `systemd` unit files (`lsm-client.service`, `lsm-server.service`) for production daemonization.
-
----
-
 <div align="center">
 
 <br>
