@@ -120,34 +120,35 @@ The central server renders a real-time terminal UI summarizing active fleet topo
 
 ### High-Level Data Flow
 
-```text
+```mermaid
 graph TD
-    subgraph Linux Host ["Monitored Linux Machine"]
+    subgraph LinuxHost["Monitored Linux Machine"]
         A["Kernel Subsystems<br/>(/proc/stat, /proc/meminfo, statvfs)"] -->|"Sample Kernel Counters"| B["SystemMonitor"]
         B -->|"Aggregate Metrics"| C["SystemData Object"]
         C -->|"Serialize"| D["nlohmann::json (NDJSON)"]
         D -->|"Buffered Write"| E["NetworkClient (POSIX Socket)"]
     end
 
-    E ==>|"TCP Port 5000 (\n framed)"| F["Server Socket Listener"]
+    E ==>|"TCP Port 5000 (framed)"| F["Server Socket Listener"]
 
-    subgraph Central Management Server ["Central Server Engine"]
+    subgraph CentralServer["Central Server Engine"]
         F -->|"Stream Buffer"| G["Message Framing & Deframer"]
         G -->|"Raw JSON Tokens"| H["JSON Validator"]
         H -->|"Sanitized Telemetry"| I["ClientRegistry"]
-        
+
         I -->|"State & Threshold Check"| J["AlertManager"]
         I -->|"Time-Series Append"| K["CsvLogger (logs/metrics.csv)"]
         I -->|"Audit Event Trail"| L["Logger (server.log)"]
         I -->|"Fleet Terminal Render"| M["Dashboard TUI"]
-        
+
         H -.->|"ACK Packet"| E
     end
 
     classDef host fill:#1e293b,stroke:#38bdf8,stroke-width:2px,color:#f8fafc;
     classDef server fill:#0f172a,stroke:#a855f7,stroke-width:2px,color:#f8fafc;
-    class Host,Linux Host host;
-    class Server,Central Management Server server;
+
+    class A,B,C,D,E host;
+    class F,G,H,I,J,K,L,M server;
 ```
 
 ### Client Lifecycle
