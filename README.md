@@ -77,17 +77,14 @@ Probes kernel metrics directly from the `/proc` virtual filesystem and POSIX `st
 - [Wire Protocol Specification](#-wire-protocol-specification)
   - [Frame Structure (NDJSON)](#frame-structure-ndjson)
   - [Telemetry Payload Schema (`metrics`)](#telemetry-payload-schema-metrics)
-  - [Server Acknowledgment (`ack`)](#server-acknowledgment-ack)
   - [TCP Stream Buffering & Deframing](#tcp-stream-buffering--deframing)
 - [Prerequisites & Toolchain](#-prerequisites--toolchain)
 - [Compilation & Build](#-compilation--build)
 - [Quick Start Guide](#-quick-start)
   - [1. Launch the Central Server](#1-launch-the-central-server)
   - [2. Deploy the Client Daemon](#2-deploy-the-client-daemon)
-- [Configuration Reference](#-configuration-reference)
 - [Directory Structure](#-directory-structure)
 - [Testing & Resilience Matrix](#-testing--resilience-matrix)
-- [Architectural Considerations & Limitations](#-architectural-considerations--limitations)
 - [Future Roadmap](#-future-roadmap)
 - [License](#-license)
 
@@ -286,53 +283,6 @@ graph TD
 ---
 
 
-### 🔄 Telemetry Journey
-
-```text
-┌──────────────┐
-│ Linux Kernel │
-└──────┬───────┘
-       │
-       ▼
-┌────────────────┐
-│ SystemMonitor  │
-└──────┬─────────┘
-       │
-       ▼
-┌────────────────┐
-│   SystemData   │
-└──────┬─────────┘
-       │
-       ▼
-┌────────────────┐
-│ JSON / NDJSON  │
-└──────┬─────────┘
-       │
-       ▼
-╔════════════════╗
-║   TCP SOCKET   ║
-╚═══════╤════════╝
-        │
-        ▼
-┌────────────────┐
-│ Server Parser  │
-└──────┬─────────┘
-       │
-       ▼
-┌────────────────┐
-│ ClientRegistry │
-└───┬────────┬───┘
-    │        │
-    ▼        ▼
- Alerts    Logging
-    │        │
-    └───┬────┘
-        ▼
-┌────────────────┐
-│ Live Dashboard │
-└────────────────┘
-```
-
 ## 📡 Wire Protocol Specification
 
 
@@ -380,18 +330,6 @@ Emitted periodically by clients:
 | `process_count`| `integer`| count | `>= 1` | Total active threads/tasks |
 | `uptime_seconds`| `integer`| seconds | `>= 0` | Total seconds since host boot |
 | `timestamp` | `integer`| seconds | POSIX Epoch | Client sampling timestamp |
-
-### Server Acknowledgment (`ack`)
-
-Transmitted by the server to confirm receipt and ingestion:
-
-```json
-{
-    "type": "ack",
-    "status": "accepted",
-    "timestamp": 1790810100
-}
-```
 
 ### TCP Stream Buffering & Deframing
 
@@ -552,57 +490,7 @@ cd linux-system-monitor
 
 ---
 
-## ⚙️ Configuration Reference
-
-Application settings are centrally managed via JSON in `config/config.json`:
-
-```json
-{
-    "server": {
-        "host": "127.0.0.1",
-        "port": 5000
-    },
-    "client": {
-        "interval": 5,
-        "retry_interval": 5
-    },
-    "thresholds": {
-        "cpu_warning": 70,
-        "cpu_critical": 90,
-        "memory_warning": 70,
-        "memory_critical": 90,
-        "disk_warning": 70,
-        "disk_critical": 90
-    },
-    "heartbeat": {
-        "timeout": 15
-    }
-}
-```
-
-### Parameter Documentation:
-
-| Category | Parameter | Default | Type | Purpose |
-| :--- | :--- | :--- | :--- | :--- |
-| `server` | `host` | `"127.0.0.1"` | `string` | Interface IP address for the listener |
-| `server` | `port` | `5000` | `integer`| TCP port for wire protocol ingress |
-| `client` | `interval` | `5` | `integer`| Telemetry sampling rate in seconds |
-| `client` | `retry_interval`| `5` | `integer`| Reconnection backoff interval upon network drop |
-| `thresholds`| `cpu_warning` | `70` | `integer`| CPU % threshold triggering `WARNING` status |
-| `thresholds`| `cpu_critical` | `90` | `integer`| CPU % threshold triggering `CRITICAL` status |
-| `thresholds`| `memory_warning`| `70` | `integer`| RAM % threshold triggering `WARNING` status |
-| `thresholds`| `memory_critical`| `90`| `integer`| RAM % threshold triggering `CRITICAL` status |
-| `thresholds`| `disk_warning` | `70` | `integer`| Disk % threshold triggering `WARNING` status |
-| `thresholds`| `disk_critical` | `90` | `integer`| Disk % threshold triggering `CRITICAL` status |
-| `heartbeat` | `timeout` | `15` | `integer`| Seconds of silence before node marked `OFFLINE` |
-
-> [!IMPORTANT]
-> **Implementation Note:**  
-> The project includes a dedicated `ConfigLoader` module. In the current iteration, active threshold constants are statically referenced in `server/Server.cpp`. Modifying `config/config.json` provides the blueprint for dynamic configuration reloading, which is targeted for seamless integration in the next release cycle.
-
----
-
-## 📂 Directory Structure
+## 📂 Structure Of Project
 
 ```text
 linux-system-monitor/
@@ -706,42 +594,6 @@ make test
 
 > [!NOTE]
 > The verification matrix below remains the detailed source of truth for the project's testing scenarios and outcomes.
-
-## 🔍 Architectural Considerations & Limitations
-
-
-1. **Persistent Client Identity Across Local Processes:**  
-   The current hardware signature algorithm ties client identity to machine-level identifiers. Consequently, launching multiple client processes on the *exact same physical machine* shares the same identity token (`PC-XXXXXX`), appearing as a single logical entity in the server registry.
-2. **Linux-Specific Kernel Dependencies:**  
-   Telemetry collectors directly read `/proc/stat`, `/proc/meminfo`, `/proc/uptime`, and invoke `statvfs()`. This codebase is optimized specifically for Linux systems and cannot run directly on Windows or macOS without a virtualization or container layer.
-3. **Unencrypted TCP Transport:**  
-   The current transport layer utilizes raw TCP sockets without TLS encryption or cryptographic authentication. Deployment in untrusted or public network environments should be fronted with a secure tunnel (e.g. WireGuard, SSH tunnel, or TLS proxy).
-4. **CSV-Based Storage Engine:**  
-   Metrics are currently persisted in append-only CSV format (`logs/metrics.csv`). For large-scale enterprise deployments tracking hundreds of nodes, a specialized time-series database (such as InfluxDB, Prometheus, or SQLite) is recommended.
-
----
-
-
-### 🛣️ Evolution Path
-
-```text
-CURRENT
-  │
-  ├── 🐧 Linux telemetry
-  ├── 🌐 TCP / NDJSON
-  ├── 🚨 Threshold alerts
-  ├── 📊 Terminal dashboard
-  └── 💾 CSV persistence
-        │
-        ▼
-NEXT
-  │
-  ├── 🔐 TLS / mTLS
-  ├── 🗄️ Database persistence
-  ├── 🌐 Web dashboard
-  ├── 🐳 Containerization
-  └── ⚙️ systemd services
-```
 
 ## 🗺️ Future Roadmap
 
